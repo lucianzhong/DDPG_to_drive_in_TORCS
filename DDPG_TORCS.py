@@ -22,7 +22,7 @@ from ActorNetwork import ActorNetwork
 from CriticNetwork import CriticNetwork
 from OU import OU
 
-OU = OU()       #Ornstein-Uhlenbeck Process
+OU = OU()       #Ornstein-Uhlenbeck Process 使用Uhlenbeck-Ornstein随机过程（下面简称UO过程），作为引入的随机噪声
 
 def playGame(train_indicator= 1):    #1 means Train, 0 means simply Run
     BUFFER_SIZE = 100000
@@ -63,6 +63,9 @@ def playGame(train_indicator= 1):    #1 means Train, 0 means simply Run
     #print("env.action_space")
 
     print("TORCS Experiment Start      ")
+    # for each episode:
+    # for each time-step:
+    # actor choose actions at, environemnt do the actions 
     for i in range(episode_count):
         print("Episode : " + str(i) + " Replay Buffer " + str(buff.count()))
         if np.mod(i, 3) == 0:
@@ -78,16 +81,16 @@ def playGame(train_indicator= 1):    #1 means Train, 0 means simply Run
             a_t = np.zeros([1,action_dim])
             noise_t = np.zeros([1,action_dim])
 
-            a_t_original = actor.model.predict(s_t.reshape(1, s_t.shape[0]))
+            a_t_original = actor.model.predict(s_t.reshape(1, s_t.shape[0]))  #keras Model API
+            # print("s_t.shape[0]",s_t.shape[0])  #29
+            # print("a_t_original",a_t_original.shape)  # (1,3)
             noise_t[0][0] = train_indicator * max(epsilon, 0) * OU.function(a_t_original[0][0],  0.0 , 0.60, 0.30)
             noise_t[0][1] = train_indicator * max(epsilon, 0) * OU.function(a_t_original[0][1],  0.5 , 1.00, 0.10)
             noise_t[0][2] = train_indicator * max(epsilon, 0) * OU.function(a_t_original[0][2], -0.1 , 1.00, 0.05)
-
             a_t[0][0] = a_t_original[0][0] + noise_t[0][0]
             a_t[0][1] = a_t_original[0][1] + noise_t[0][1]
             a_t[0][2] = a_t_original[0][2] + noise_t[0][2]
             # print(a_t[0]) #[ 0.00066324  0.42420975 -0.09446412]
-
 
             ob, r_t, done, info = env.step(a_t[0])# the action is a_t[0] and get the observations from TORCS
             s_t1 = np.hstack( (ob.angle, ob.track, ob.trackPos, ob.speedX, ob.speedY, ob.speedZ, ob.wheelSpinVel/100.0, ob.rpm) )
@@ -100,7 +103,7 @@ def playGame(train_indicator= 1):    #1 means Train, 0 means simply Run
             rewards = np.asarray([e[2] for e in batch])
             new_states = np.asarray([e[3] for e in batch])
             dones = np.asarray([e[4] for e in batch])
-            y_t = np.asarray([e[1] for e in batch])
+            y_t = np.asarray([e[1] for e in batch])  
 
             target_q_values = critic.target_model.predict([new_states, actor.target_model.predict(new_states)])  
 
@@ -111,7 +114,7 @@ def playGame(train_indicator= 1):    #1 means Train, 0 means simply Run
                     y_t[k] = rewards[k] + GAMMA*target_q_values[k]
        
             if (train_indicator):
-                loss += critic.model.train_on_batch([states,actions], y_t) 
+                loss += critic.model.train_on_batch([states,actions], y_t)  # keras API
                 a_for_grad = actor.model.predict(states)
                 grads = critic.gradients(states, a_for_grad)
                 actor.train(states, grads)
@@ -125,6 +128,7 @@ def playGame(train_indicator= 1):    #1 means Train, 0 means simply Run
             if done:
                 break
 
+        # the saving process
         if np.mod(i, 3) == 0:
             if (train_indicator):
                 print("Now we save model")
