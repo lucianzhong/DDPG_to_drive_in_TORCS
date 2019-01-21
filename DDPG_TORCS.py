@@ -1,5 +1,3 @@
-
-
 import numpy as np
 import random
 import argparse
@@ -22,7 +20,7 @@ from ActorNetwork import ActorNetwork
 from CriticNetwork import CriticNetwork
 from OU import OU
 
-OU = OU()       #Ornstein-Uhlenbeck Process 使用Uhlenbeck-Ornstein随机过程（下面简称UO过程），作为引入的随机噪声
+OU = OU()       # 使用Uhlenbeck-Ornstein随机过程（下面简称UO过程），作为引入的随机噪声
 
 def playGame(train_indicator= 1):    #1 means Train, 0 means simply Run
     BUFFER_SIZE = 100000
@@ -35,7 +33,7 @@ def playGame(train_indicator= 1):    #1 means Train, 0 means simply Run
     action_dim = 3  #Steering/Acceleration/Brake
     state_dim = 29  #of sensors input
 
-    np.random.seed(1337)
+    np.random.seed(1337) #seed( ) 用于指定随机数生成时所用算法开始的整数值，如果使用相同的seed( )值，则每次生成的随即数都相同，如果不设置这个值，则系统根据时间来自己选择这个值，此时每次生成的随机数因时间差异而不同。
     # parameters for iteration
     EXPLORE = 100000.
     episode_count = 2000
@@ -65,7 +63,7 @@ def playGame(train_indicator= 1):    #1 means Train, 0 means simply Run
     print("TORCS Experiment Start      ")
     # for each episode:
     # for each time-step:
-    # actor choose actions at, environemnt do the actions 
+    # actor choose actions, environemnt do the actions 
     for i in range(episode_count):
         print("Episode : " + str(i) + " Replay Buffer " + str(buff.count()))
         if np.mod(i, 3) == 0:
@@ -95,7 +93,7 @@ def playGame(train_indicator= 1):    #1 means Train, 0 means simply Run
             ob, r_t, done, info = env.step(a_t[0])# the action is a_t[0] and get the observations from TORCS
             s_t1 = np.hstack( (ob.angle, ob.track, ob.trackPos, ob.speedX, ob.speedY, ob.speedZ, ob.wheelSpinVel/100.0, ob.rpm) )
             buff.add(s_t, a_t[0], r_t, s_t1, done)      #Add replay buffer
-
+            #When training the network, random mini-batches from the replay memory are used instead of most the recent transition, which will greatly improve the stability. 
             #Do the batch update
             batch = buff.getBatch(BATCH_SIZE)
             states = np.asarray([e[0] for e in batch])
@@ -112,7 +110,7 @@ def playGame(train_indicator= 1):    #1 means Train, 0 means simply Run
                     y_t[k] = rewards[k]
                 else:
                     y_t[k] = rewards[k] + GAMMA*target_q_values[k]
-       
+            # training
             if (train_indicator):
                 loss += critic.model.train_on_batch([states,actions], y_t)  # keras API
                 a_for_grad = actor.model.predict(states)

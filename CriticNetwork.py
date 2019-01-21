@@ -13,6 +13,7 @@ import tensorflow as tf
 HIDDEN1_UNITS = 300
 HIDDEN2_UNITS = 600
 
+#critic包含online q和 target q 两张神经网络， 其结构也是一样的
 class CriticNetwork(object):
     def __init__(self, sess, state_size, action_size, BATCH_SIZE, TAU, LEARNING_RATE):
         self.sess = sess
@@ -35,6 +36,15 @@ class CriticNetwork(object):
             self.action: actions
         })[0]
 
+    """
+    Target Network
+It is a well-known fact that directly implementing Q-learning with neural networks proved to be unstable in many environments including TORCS. 
+Deepmind team came up the solution to the problem is to use a target network, where we created a copy of the actor and critic networks respectively, 
+that are used for calculating the target values. 
+The weights of these target networks are then updated by having them slowly track the learned networks:
+    θ′←τθ+(1−τ)θ′
+where τ≪1. This means that the target values are constrained to change slowly, greatly improving the stability of learning.
+    """
     def target_train(self):
         critic_weights = self.model.get_weights()
         critic_target_weights = self.target_model.get_weights()

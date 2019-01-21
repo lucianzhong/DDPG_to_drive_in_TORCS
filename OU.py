@@ -1,7 +1,7 @@
 import random
 import numpy as np 
 
-# 使用Uhlenbeck-Ornstein随机过程（下面简称UO过程），作为引入的随机噪声
+# 使用Uhlenbeck-Ornstein随机过程（下面简称UO过程），作为引入的随机噪声 exploration
 
 class OU(object):
 

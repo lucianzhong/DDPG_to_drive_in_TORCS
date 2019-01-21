@@ -114,7 +114,7 @@ class TorcsEnv:
         # Save the privious full-obs from torcs for the reward calculation
         obs_pre = copy.deepcopy(client.S.d)
 
-        # One-Step Dynamics Update #################################
+        # One-Step Dynamics Update 
         # Apply the Agent's action into torcs
         client.respond_to_server()
         # Get the response of TORCS
@@ -126,7 +126,10 @@ class TorcsEnv:
         # Make an obsevation from a raw observation vector from TORCS
         self.observation = self.make_observaton(obs)
 
-        # Reward setting Here #######################################
+        # Reward setting Here 
+        # Rt=Vxcos(θ)−Vxsin(θ)−Vx∣trackPos∣  
+        #In plain English, we want to maximum longitudinal velocity (first term), minimize transverse velocity (second term), 
+        #and we also penalize the AI if it constantly drives very off center of the track (third term)
         # direction-dependent positive reward
         track = np.array(obs['track'])
         trackPos = np.array(obs['trackPos'])
@@ -141,7 +144,7 @@ class TorcsEnv:
         if obs['damage'] - obs_pre['damage'] > 0:
             reward = -1
 
-        # Termination judgement #########################
+        # Termination judgement 
         episode_terminate = False
         #if (abs(track.any()) > 1 or abs(trackPos) > 1):  # Episode is terminated if the car is out of track
         #    reward = -200

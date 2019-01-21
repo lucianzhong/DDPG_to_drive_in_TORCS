@@ -29,7 +29,7 @@ class ActorNetwork(object):
         self.action_gradient = tf.placeholder(tf.float32,[None, action_size])
         self.params_grad = tf.gradients(self.model.output, self.weights, -self.action_gradient)
         grads = zip(self.params_grad, self.weights)
-        self.optimize = tf.train.AdamOptimizer(LEARNING_RATE).apply_gradients(grads)
+        self.optimize = tf.train.AdamOptimizer(LEARNING_RATE).apply_gradients(grads)   #使用Adam作为gradient descent的算法
         self.sess.run(tf.initialize_all_variables())
 
     def train(self, states, action_grads):
@@ -38,6 +38,15 @@ class ActorNetwork(object):
             self.action_gradient: action_grads
         })
 
+    """
+    Target Network
+It is a well-known fact that directly implementing Q-learning with neural networks proved to be unstable in many environments including TORCS. 
+Deepmind team came up the solution to the problem is to use a target network, where we created a copy of the actor and critic networks respectively, 
+that are used for calculating the target values. 
+The weights of these target networks are then updated by having them slowly track the learned networks:
+	θ′←τθ+(1−τ)θ′
+where τ≪1. This means that the target values are constrained to change slowly, greatly improving the stability of learning.
+    """
     def target_train(self):
         actor_weights = self.model.get_weights()
         actor_target_weights = self.target_model.get_weights()
@@ -48,8 +57,13 @@ class ActorNetwork(object):
     def create_actor_network(self, state_size,action_dim):
         print("create_actor_network")
         S = Input(shape=[state_size])   
+        # used 2 hidden layers with 300 and 600 hidden units respectively
         h0 = Dense(HIDDEN1_UNITS, activation='relu')(S)
         h1 = Dense(HIDDEN2_UNITS, activation='relu')(h0)
+        #为了限定policy网络的输出action范围，使用tanh对steer，sigmoid对accelerate和brake，作为bound函数，进行范围限定
+        #The output consist of 3 continuous actions, Steering, which is a single unit with tanh activation function (where -1 means max right turn and +1 means max left turn). 
+        #Acceleration, which is a single unit with sigmoid activation function (where 0 means no gas, 1 means full gas). 
+        # Brake, another single unit with sigmoid activation function (where 0 means no brake, 1 bull brake)
         Steering = Dense(1,activation='tanh',init=lambda shape, name: normal(shape, scale=1e-4, name=name))(h1)  
         Acceleration = Dense(1,activation='sigmoid',init=lambda shape, name: normal(shape, scale=1e-4, name=name))(h1)   
         Brake = Dense(1,activation='sigmoid',init=lambda shape, name: normal(shape, scale=1e-4, name=name))(h1) 
