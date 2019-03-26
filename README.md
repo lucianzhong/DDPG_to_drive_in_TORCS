@@ -4,23 +4,24 @@ Requirements:
 2. Python 3    
 3. Keras 1.1.0   
 4. Tensorflow r0.10   
-5. gym_torcs    
-
+5. gym_torcs       
 
 How to install?
-https://blog.csdn.net/ss910/article/details/77618425
-(need to use sudo when run python snakeoil3_gym.py)
+--------
+https://blog.csdn.net/ss910/article/details/77618425    
+(need to use sudo when run python snakeoil3_gym.py)    
 
-How to run?
-python DDPG_TORCS.py    (按F2切换到第一人称视角)
-
+How to run?    
+--------
+python DDPG_TORCS.py    (按F2切换到第一人称视角)     
 
 
 The actions:
-输出action有三个维度： 
-- steer: 方向, 取值范围 [-1,1] 
-- accel： 油门，取值范围 [0,1] 
-- brake: 刹车，取值范围 [0,1]
+-------
+输出action有三个维度：    
+        - steer: 方向, 取值范围 [-1,1]    
+        - accel： 油门，取值范围 [0,1]    
+        - brake: 刹车，取值范围 [0,1]     
 
 
 The reward has been define in the file gym_torcs_DDPG.py at line 129
