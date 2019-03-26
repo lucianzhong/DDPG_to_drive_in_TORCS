@@ -1,9 +1,10 @@
-Requirements:
-We are assuming you are using Ubuntu 14.04 LTS/16.04 LTS machine and installed
-Python 3
-Keras 1.1.0
-Tensorflow r0.10
-gym_torcs
+Requirements:    
+---------
+1. We are assuming you are using Ubuntu 14.04 LTS/16.04 LTS machine and installed,version do matters      
+2. Python 3    
+3. Keras 1.1.0   
+4. Tensorflow r0.10   
+5. gym_torcs    
 
 
 How to install?
