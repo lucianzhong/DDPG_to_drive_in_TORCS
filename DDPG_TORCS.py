@@ -82,6 +82,10 @@ def playGame(train_indicator= 1):    #1 means Train, 0 means simply Run
             a_t_original = actor.model.predict(s_t.reshape(1, s_t.shape[0]))  #keras Model API
             # print("s_t.shape[0]",s_t.shape[0])  #29
             # print("a_t_original",a_t_original.shape)  # (1,3)
+            #如何在连续域中设计正确的探索算法。 在Q-learing我们使用了ε贪婪策略，其中代理在某个百分比的时间内尝试随机动作。 
+            #然而，这种方法在TORCS中不能很好地工作，因为我们有3个动作[转向，加速，制动]。 如果我只是从均匀随机分布中随机选择动作，
+            #我们将生成一些无聊的组合[例如：制动的值大于加速度的值而车辆根本不移动）。 因此，我们使用Ornstein-Uhlenbeck过程添加噪声来进行探索。
+            #Ornstein-Uhlenbeck过程
             noise_t[0][0] = train_indicator * max(epsilon, 0) * OU.function(a_t_original[0][0],  0.0 , 0.60, 0.30)
             noise_t[0][1] = train_indicator * max(epsilon, 0) * OU.function(a_t_original[0][1],  0.5 , 1.00, 0.10)
             noise_t[0][2] = train_indicator * max(epsilon, 0) * OU.function(a_t_original[0][2], -0.1 , 1.00, 0.05)
@@ -94,7 +98,7 @@ def playGame(train_indicator= 1):    #1 means Train, 0 means simply Run
             s_t1 = np.hstack( (ob.angle, ob.track, ob.trackPos, ob.speedX, ob.speedY, ob.speedZ, ob.wheelSpinVel/100.0, ob.rpm) )
             buff.add(s_t, a_t[0], r_t, s_t1, done)      #Add replay buffer
             #When training the network, random mini-batches from the replay memory are used instead of most the recent transition, which will greatly improve the stability. 
-            #Do the batch update
+            #Do the batch update #Experience Replay
             batch = buff.getBatch(BATCH_SIZE)
             states = np.asarray([e[0] for e in batch])
             actions = np.asarray([e[1] for e in batch])
@@ -113,7 +117,9 @@ def playGame(train_indicator= 1):    #1 means Train, 0 means simply Run
             # training
             if (train_indicator):
                 loss += critic.model.train_on_batch([states,actions], y_t)  # keras API
-                a_for_grad = actor.model.predict(states)
+                #而确定性策略则决定简单点，虽然在同一个状态处，采用的动作概率不同，但是最大概率只有一个，如果我们只取最大概率的动作，去掉这个概率分布，那么就简单多了。
+                #即作为确定性策略，相同的策略，在同一个状态处，动作是唯一确定的，即策略变成 pi{theta}(s) = a
+                a_for_grad = actor.model.predict(states)  #然后使用采样的策略梯度更新actor策略, 召回a是确定性政策
                 grads = critic.gradients(states, a_for_grad)
                 actor.train(states, grads)
                 actor.target_train()

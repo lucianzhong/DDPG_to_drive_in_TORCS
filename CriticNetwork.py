@@ -52,6 +52,9 @@ where τ≪1. This means that the target values are constrained to change slowly
             critic_target_weights[i] = self.TAU * critic_weights[i] + (1 - self.TAU)* critic_target_weights[i]
         self.target_model.set_weights(critic_target_weights)
 
+    #Critic Network的构建与Deep-Q网络非常相似。唯一的区别是我们使用了2个具有300和600个隐藏单元的隐藏层。
+    #此外，评论家网络将状态和行动都作为输入。根据DDPG的论文，直到Q网络的第二个隐藏层才包含这些动作。这里我们使用Keras函数Merge将动作和隐藏层合并在一起。
+
     def create_critic_network(self, state_size,action_dim):
         print("Now we build the model")
         S = Input(shape=[state_size])  

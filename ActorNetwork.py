@@ -13,6 +13,9 @@ HIDDEN1_UNITS = 300
 HIDDEN2_UNITS = 600
 
 # actor包含online policy和 target policy 两张神经网络， 其结构是一样的
+#代码中使用了2个隐藏层，分别有300和600个隐藏单元。 输出包括3个连续动作，转向Steering，
+#这是一个具有tanh激活功能的单个单位（其中-1表示最右转弯，+1表示最大左转弯）。 
+#加速度Acceleration,，是具有S形激活功能的单个单元（其中0表示无气体，1表示全气体）。 制动Brake，另一个具有S形激活功能的单元（其中0表示无制动，1表示制动）
 
 class ActorNetwork(object):
     def __init__(self, sess, state_size, action_size, BATCH_SIZE, TAU, LEARNING_RATE):
@@ -33,19 +36,16 @@ class ActorNetwork(object):
         self.sess.run(tf.initialize_all_variables())
 
     def train(self, states, action_grads):
-        self.sess.run(self.optimize, feed_dict={
-            self.state: states,
-            self.action_gradient: action_grads
-        })
+        self.sess.run( self.optimize, feed_dict={self.state: states, self.action_gradient: action_grads} )
 
     """
-    Target Network
-It is a well-known fact that directly implementing Q-learning with neural networks proved to be unstable in many environments including TORCS. 
-Deepmind team came up the solution to the problem is to use a target network, where we created a copy of the actor and critic networks respectively, 
-that are used for calculating the target values. 
-The weights of these target networks are then updated by having them slowly track the learned networks:
-	θ′←τθ+(1−τ)θ′
-where τ≪1. This means that the target values are constrained to change slowly, greatly improving the stability of learning.
+	    Target Network
+	It is a well-known fact that directly implementing Q-learning with neural networks proved to be unstable in many environments including TORCS. 
+	Deepmind team came up the solution to the problem is to use a target network, where we created a copy of the actor and critic networks respectively, 
+	that are used for calculating the target values. 
+	The weights of these target networks are then updated by having them slowly track the learned networks:
+		θ′←τθ+(1−τ)θ′
+	where τ≪1. This means that the target values are constrained to change slowly, greatly improving the stability of learning.
     """
     def target_train(self):
         actor_weights = self.model.get_weights()
@@ -71,4 +71,12 @@ where τ≪1. This means that the target values are constrained to change slowly
         V = Dense(3,activation='tanh')(h1) 
         model = Model(input=S,output=V)
         return model, model.trainable_weights, S
+
+        """
+        代码使用了名为Merge层将3个输出组合在一起（在keras2.2.0的版本中Merge已经取消）。聪明的读者可能会问为什么不使用像这样的传统密集功能
+		V = Dense(3,activation='tanh')(h1)
+		这是有原因的。首先使用3个不同的Dense（）函数允许每个连续动作具有不同的激活功能，例如，使用tanh（）进行加速没有意义，因为tanh在[-1,1]范围内，而加速度在范围内[0,1]
+		还请注意，在最后一层我们使用了正常的初始化 μ = 0，σ = 1e-4，以确保policy的初始产出接近于零。
+		
+		"""
 
